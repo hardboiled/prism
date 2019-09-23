@@ -4,6 +4,7 @@ import { IHttpOperation } from '@stoplight/types';
 import * as fastify from 'fastify';
 import * as fastifyCors from 'fastify-cors';
 import * as formbodyParser from 'fastify-formbody';
+const proxy = require('fastify-http-proxy');
 import { IncomingMessage, ServerResponse } from 'http';
 import { defaults } from 'lodash';
 import * as typeIs from 'type-is';
@@ -11,14 +12,36 @@ import { getHttpConfigFromRequest } from './getHttpConfigFromRequest';
 import { serialize } from './serialize';
 import { IPrismHttpServer, IPrismHttpServerOpts } from './types';
 
+function validateAndLog(abc: any) {
+  // for the validation will need to find it in the spec: https://github.com/stoplightio/prism/blob/63d9aa7a9acf27ad455a462c7d699f512503e0dc/packages/core/src/factory.ts#L21
+
+  console.log('validating', typeof abc);
+  console.log('no errors');
+  console.log('1 warning found');
+}
+
+function readStream(stream: NodeJS.ReadStream, encoding = 'utf8') {
+  stream.setEncoding(encoding);
+
+  return new Promise((resolve, reject) => {
+    let data = '';
+
+    stream.on('data', chunk => (data += chunk));
+    stream.on('end', () => resolve(data));
+    stream.on('error', error => reject(error));
+  });
+}
+
 export const createServer = (operations: IHttpOperation[], opts: IPrismHttpServerOpts): IPrismHttpServer => {
   const { components, config } = opts;
 
-  const server = fastify({
-    logger: (components && components.logger) || createLogger('HTTP SERVER'),
-    disableRequestLogging: true,
-    modifyCoreObjects: false,
-  }).register(formbodyParser);
+  const server = opts.config.proxy
+    ? fastify()
+    : fastify({
+        logger: (components && components.logger) || createLogger('HTTP SERVER'),
+        disableRequestLogging: true,
+        modifyCoreObjects: false,
+      }).register(formbodyParser);
 
   if (opts.cors) server.register(fastifyCors);
 
@@ -36,10 +59,28 @@ export const createServer = (operations: IHttpOperation[], opts: IPrismHttpServe
     return done(error);
   });
 
+  server.register(proxy, {
+    upstream: 'http://localhost:9999', // TODO: take the value from `upstream`
+    http2: false,
+    preHandler(request: any, reply: any, done: any) {
+      validateAndLog(request);
+
+      done();
+    },
+    replyOptions: {
+      onResponse(request: any, reply: any, stream: any) {
+        readStream(stream).then(validateAndLog);
+
+        reply.send(stream);
+      },
+    },
+  });
+
   const mergedConfig = defaults<Partial<IHttpConfig>, IHttpConfig>(config, {
     mock: { dynamic: false },
     validateRequest: true,
     validateResponse: true,
+    proxy: opts.config.proxy,
   });
 
   const prism = createInstance(mergedConfig, components);

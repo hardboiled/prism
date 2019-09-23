@@ -4,11 +4,15 @@ import { createMultiProcessPrism, CreatePrismOptions, createSingleProcessPrism }
 import getHttpOperations from '../util/getHttpOperations';
 import options from './options';
 
-const mockCommand: CommandModule = {
-  describe: 'Start a mock server with the given spec file',
-  command: 'mock <spec>',
+const proxyCommand: CommandModule = {
+  describe: 'Start a proxy server with the given spec file',
+  command: 'proxy <upstream> <spec>',
   builder: yargs =>
     yargs
+      .positional('upstream', {
+        description: 'An address for the destination server.',
+        type: 'string',
+      })
       .positional('spec', {
         description: 'Path to a spec file. Can be both a file or a fetchable resource on the web.',
         type: 'string',
@@ -27,11 +31,11 @@ const mockCommand: CommandModule = {
     };
 
     if (multiprocess) {
-      return createMultiProcessPrism({ cors, dynamic, port, host, operations, proxy: false });
+      return createMultiProcessPrism({ cors, dynamic, port, host, operations, proxy: true });
     }
 
-    return createSingleProcessPrism({ cors, dynamic, port, host, operations, proxy: false });
+    return createSingleProcessPrism({ cors, dynamic, port, host, operations, proxy: true });
   },
 };
 
-export default mockCommand;
+export default proxyCommand;
