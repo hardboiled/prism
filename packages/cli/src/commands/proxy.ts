@@ -5,7 +5,7 @@ import getHttpOperations from '../util/getHttpOperations';
 import options from './options';
 
 const proxyCommand: CommandModule = {
-  describe: 'Start a proxy server with the given spec file',
+  describe: 'Start a proxy server with the given document',
   command: 'proxy <upstream> <spec>',
   builder: yargs =>
     yargs

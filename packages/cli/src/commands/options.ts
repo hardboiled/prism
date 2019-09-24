@@ -15,13 +15,6 @@ export default {
     string: true,
   },
 
-  dynamic: {
-    alias: 'd',
-    description: 'Dynamically generate examples.',
-    boolean: true,
-    default: false,
-  },
-
   cors: {
     description: 'Enables CORS headers.',
     boolean: true,

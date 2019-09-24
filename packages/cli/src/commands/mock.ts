@@ -20,7 +20,15 @@ const mockCommand: CommandModule = {
 
         process.exit(1);
       })
-      .options(options),
+      .options({
+        ...options,
+        dynamic: {
+          alias: 'd',
+          description: 'Dynamically generate examples.',
+          boolean: true,
+          default: false,
+        },
+      }),
   handler: parsedArgs => {
     const { multiprocess, dynamic, port, host, cors, operations } = (parsedArgs as unknown) as CreatePrismOptions & {
       multiprocess: boolean;

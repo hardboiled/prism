@@ -4,7 +4,7 @@ import { IHttpOperation } from '@stoplight/types';
 import * as fastify from 'fastify';
 import * as fastifyCors from 'fastify-cors';
 import * as formbodyParser from 'fastify-formbody';
-const proxy = require('fastify-http-proxy');
+import * as proxy from 'fastify-http-proxy';
 import { IncomingMessage, ServerResponse } from 'http';
 import { defaults } from 'lodash';
 import * as typeIs from 'type-is';
