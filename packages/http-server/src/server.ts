@@ -37,7 +37,7 @@ export const createServer = (operations: IHttpOperation[], opts: IPrismHttpServe
 
   const server = opts.config.proxy
     ? fastify().register(proxy, {
-        upstream: 'http://localhost:9999', // TODO: take the value from `upstream`
+        upstream: opts.config.proxy,
         http2: false,
         preHandler(request: any, reply: any, done: any) {
           validateAndLog(request);
