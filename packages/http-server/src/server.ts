@@ -1,23 +1,25 @@
 import { createLogger } from '@stoplight/prism-core';
 import { createInstance, IHttpConfig, IHttpMethod, PrismHttpInstance, ProblemJsonError } from '@stoplight/prism-http';
 import { IHttpOperation } from '@stoplight/types';
+import { FastifyReply, FastifyRequest } from 'fastify';
 import * as fastify from 'fastify';
 import * as fastifyCors from 'fastify-cors';
 import * as formbodyParser from 'fastify-formbody';
 import * as proxy from 'fastify-http-proxy';
 import { IncomingMessage, ServerResponse } from 'http';
+import { Http2ServerRequest, Http2ServerResponse } from 'http2';
 import { defaults } from 'lodash';
 import * as typeIs from 'type-is';
 import { getHttpConfigFromRequest } from './getHttpConfigFromRequest';
 import { serialize } from './serialize';
 import { IPrismHttpServer, IPrismHttpServerOpts } from './types';
 
-function validateAndLog(abc: any) {
-  // for the validation will need to find it in the spec: https://github.com/stoplightio/prism/blob/63d9aa7a9acf27ad455a462c7d699f512503e0dc/packages/core/src/factory.ts#L21
+function validateRequest(x: any) {
+  return x;
+}
 
-  console.log('validating', typeof abc);
-  console.log('no errors');
-  console.log('1 warning found');
+function validateResponse(x: any) {
+  return x;
 }
 
 function readStream(stream: NodeJS.ReadStream, encoding = 'utf8') {
@@ -39,14 +41,22 @@ export const createServer = (operations: IHttpOperation[], opts: IPrismHttpServe
     ? fastify().register(proxy, {
         upstream: opts.config.proxy,
         http2: false,
-        preHandler(request: any, reply: any, done: any) {
-          validateAndLog(request);
+        preHandler(
+          request: FastifyRequest<IncomingMessage | Http2ServerRequest>,
+          reply: FastifyReply<ServerResponse | Http2ServerResponse>,
+          done: Function,
+        ) {
+          validateRequest(request);
 
           done();
         },
         replyOptions: {
-          onResponse(request: any, reply: any, stream: any) {
-            readStream(stream).then(validateAndLog);
+          onResponse(
+            request: FastifyRequest<IncomingMessage | Http2ServerRequest>,
+            reply: FastifyReply<ServerResponse | Http2ServerResponse>,
+            stream: NodeJS.ReadStream,
+          ) {
+            readStream(stream).then(validateResponse);
 
             reply.send(stream);
           },
