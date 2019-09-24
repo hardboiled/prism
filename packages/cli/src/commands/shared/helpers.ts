@@ -5,8 +5,11 @@ import getHttpOperations from '../../util/getHttpOperations';
 export const middleware = async (argv: any) => (argv.operations = await getHttpOperations(argv.document!));
 
 export const onFail = (yargs: any, msg: string, err: { message: string }) => {
-  if (msg) yargs.showHelp();
-  else signale.fatal(err.message);
+  if (msg) {
+    yargs.showHelp();
+  } else {
+    signale.fatal(err.message);
+  }
 
   process.exit(1);
 };
@@ -20,13 +23,12 @@ export const documentPositional: [string, object] = [
 ];
 
 export const handler = (isProxy: boolean, parsedArgs: any) => {
-  const { multiprocess, dynamic, port, host, cors, operations } = (parsedArgs as unknown) as CreatePrismOptions & {
+  const { multiprocess, port, host, cors, operations } = (parsedArgs as unknown) as CreatePrismOptions & {
     multiprocess: boolean;
   };
 
-  if (multiprocess) {
-    return createMultiProcessPrism({ cors, dynamic, port, host, operations, proxy: isProxy });
-  }
+  const opts = isProxy ? { upstream: parsedArgs.upstream } : { dynamic: parsedArgs.dynamic };
+  const options = { cors, port, host, operations, ...opts };
 
-  return createSingleProcessPrism({ cors, dynamic, port, host, operations, proxy: isProxy });
+  return (multiprocess ? createMultiProcessPrism : createSingleProcessPrism)(options);
 };

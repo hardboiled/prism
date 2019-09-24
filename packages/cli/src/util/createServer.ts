@@ -43,7 +43,10 @@ async function createPrismServerWithLogger(options: CreatePrismOptions, logInsta
 
   const server = createHttpServer(options.operations, {
     cors: options.cors,
-    config: { mock: { dynamic: options.dynamic }, validateRequest: true, validateResponse: true, proxy: options.proxy },
+    config: Object.assign(
+      { mock: { dynamic: !!options.dynamic }, validateRequest: true, validateResponse: true },
+      options.upstream ? { proxy: options.upstream } : {},
+    ),
     components: { logger: logInstance.child({ name: 'HTTP SERVER' }) },
   });
 
@@ -78,10 +81,10 @@ function pipeOutputToSignale(stream: Readable) {
 }
 
 export type CreatePrismOptions = {
-  dynamic: boolean;
+  dynamic?: boolean;
   cors: boolean;
   host?: string;
   port: number;
   operations: IHttpOperation[];
-  proxy: boolean;
+  upstream?: boolean;
 };

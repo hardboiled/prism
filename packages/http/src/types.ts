@@ -22,7 +22,7 @@ export interface IHttpConfig extends IPrismConfig {
   validateRequest: boolean;
   validateResponse: boolean;
 
-  proxy: boolean;
+  proxy?: string;
 }
 
 export type IHttpNameValues = Dictionary<string | string[]>;

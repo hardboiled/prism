@@ -36,7 +36,22 @@ export const createServer = (operations: IHttpOperation[], opts: IPrismHttpServe
   const { components, config } = opts;
 
   const server = opts.config.proxy
-    ? fastify()
+    ? fastify().register(proxy, {
+        upstream: 'http://localhost:9999', // TODO: take the value from `upstream`
+        http2: false,
+        preHandler(request: any, reply: any, done: any) {
+          validateAndLog(request);
+
+          done();
+        },
+        replyOptions: {
+          onResponse(request: any, reply: any, stream: any) {
+            readStream(stream).then(validateAndLog);
+
+            reply.send(stream);
+          },
+        },
+      })
     : fastify({
         logger: (components && components.logger) || createLogger('HTTP SERVER'),
         disableRequestLogging: true,
@@ -57,23 +72,6 @@ export const createServer = (operations: IHttpOperation[], opts: IPrismHttpServe
     error.status = 415;
     Error.captureStackTrace(error);
     return done(error);
-  });
-
-  server.register(proxy, {
-    upstream: 'http://localhost:9999', // TODO: take the value from `upstream`
-    http2: false,
-    preHandler(request: any, reply: any, done: any) {
-      validateAndLog(request);
-
-      done();
-    },
-    replyOptions: {
-      onResponse(request: any, reply: any, stream: any) {
-        readStream(stream).then(validateAndLog);
-
-        reply.send(stream);
-      },
-    },
   });
 
   const mergedConfig = defaults<Partial<IHttpConfig>, IHttpConfig>(config, {
